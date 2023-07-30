@@ -1,0 +1,9 @@
+flask 
+openai
+langchain
+python-dotenv
+tiktoken
+pypdf
+chromadb
+flask_cors
+Flask-SQLAlchemy
