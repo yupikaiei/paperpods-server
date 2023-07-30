@@ -1,0 +1,5 @@
+docs
+static
+data.db
+*.pyc
+.env
