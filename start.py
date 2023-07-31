@@ -25,7 +25,7 @@ class User(db.Model):
 
 class Podcast(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    User_id = db.Column(db.Integer, db.ForeignKey('user.id'), primary_key=True)
+    User_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     image = db.Column(db.String, nullable=True)
     name = db.Column(db.String, nullable=False)
     host = db.Column(db.String, nullable=False)
