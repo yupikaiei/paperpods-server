@@ -61,11 +61,11 @@ class PodcastGenerator:
         return rewriten
 
     def generatePodcast(self, podcastName, hostName, explanationLevel, document):
-        data = generateScript(document)
-        intro = introducePodcast(podcastName, hostName, explanationLevel, data['intro'])
+        data = self.generateScript(document)
+        intro = self.introducePodcast(podcastName, hostName, explanationLevel, data['intro'])
         print("Intro: " + intro)
         gen_content = self.rewriteContent(data['content'], explanationLevel)
-        closure = closurePodcast(podcastName, hostName, explanationLevel, data['intro'])
+        closure = self.closurePodcast(podcastName, hostName, explanationLevel, data['intro'])
 
         return {
             "intro": intro,
