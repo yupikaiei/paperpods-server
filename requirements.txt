@@ -4,8 +4,9 @@ langchain
 python-dotenv
 tiktoken
 pypdf
-chromadb==0.3.29
 flask_cors
 Flask-SQLAlchemy
-unstructured
 gunicorn
+faiss-cpu
+pdfminer.six
+

@@ -3,6 +3,7 @@ from langchain.chat_models import ChatOpenAI
 from langchain.text_splitter import CharacterTextSplitter
 from langchain.document_loaders import PyPDFLoader, PDFMinerLoader
 from langchain.indexes import VectorstoreIndexCreator
+from langchain.vectorstores import FAISS
 from langchain.prompts import PromptTemplate
 from langchain.chains.summarize import load_summarize_chain
 import textwrap
@@ -29,7 +30,7 @@ class PodcastGenerator:
         document.save('docs/' + document.filename)
 
         loader = PDFMinerLoader('docs/' + document.filename)
-        index = VectorstoreIndexCreator().from_loaders([loader])
+        index = VectorstoreIndexCreator(vectorstore_cls=FAISS).from_loaders([loader])
         return index
 
     def rewriteContent(self, content, explanationLevel):
@@ -118,7 +119,7 @@ class PodcastGenerator:
         #     List the main topics and subtopics of this research paper.
         # """
         query = """
-            Write an outline in of the main topics of this research paper. Ignore introduction, conclusion, references and acknowledgements.
+            Write an outline in of the main topics of this research paper. Ignore introduction, conclusion, references, acknowledgements and authors.
 
             Example: [{
                 "topic": "Some very importannt topic",
@@ -133,7 +134,10 @@ class PodcastGenerator:
         outline = index.query(query)
         print("Outline:" + outline)
 
-        res_data = json.loads(outline)
+        try:
+            res_data = json.loads(outline)
+        except:
+            res_data = []
 
         outline_data = []
         for item in res_data:
