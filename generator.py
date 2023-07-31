@@ -12,8 +12,8 @@ import os
 class PodcastGenerator:
 
     def __init__(self, openai_api_key):
-        self.llm = ChatOpenAI(temperature=0)
-        self.llm2 = OpenAI(temperature=0)
+        self.llm = ChatOpenAI(temperature=0, openai_api_key=openai_api_key)
+        self.llm2 = OpenAI(temperature=0, openai_api_key=openai_api_key)
         self.openai_api_key = openai_api_key
         os.environ["OPENAI_API_KEY"] = self.openai_api_key
 
