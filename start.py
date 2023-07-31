@@ -2,10 +2,11 @@ from dotenv import load_dotenv
 load_dotenv()
 
 import os
+import json
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from summarize import generatePodcast
-from elabs import get_voices, tts
+from generator import PodcastGenerator
+from elabs import Elabs
 import hashlib
 
 from flask_sqlalchemy import SQLAlchemy
@@ -15,6 +16,8 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String, unique=True, nullable=False)
     password = db.Column(db.String, nullable=False)
+    openai_api_key = db.Column(db.String, nullable=False)
+    elabs_api_key = db.Column(db.String, nullable=False)
     podcastName = db.Column(db.String, nullable=True)
     hostName = db.Column(db.String, nullable=True)
     explanationLevel = db.Column(db.String, nullable=True)
@@ -41,6 +44,8 @@ def register():
     # parse the form data
     username = request.form['username']
     password = request.form['password']
+    openai_api_key = request.form['openai_api_key']
+    elabs_api_key = request.form['elabs_api_key']
 
     # hash password
     hashed_password = hashlib.md5(password.encode()).hexdigest()
@@ -54,6 +59,8 @@ def register():
     user = User(
         username=username,
         password=hashed_password,
+        openai_api_key=openai_api_key,
+        elabs_api_key=elabs_api_key
     )
     db.session.add(user)
     db.session.commit()
@@ -69,6 +76,8 @@ def register():
         hostName=user.hostName,
         explanationLevel=user.explanationLevel,
         voice_id=user.voice_id,
+        openai_api_key=user.openai_api_key,
+        elabs_api_key=user.elabs_api_key,
     ), 200
 
 @app.route('/login', methods=['POST'])
@@ -97,6 +106,8 @@ def login():
         hostName=user.hostName,
         explanationLevel=user.explanationLevel,
         voice_id=user.voice_id,
+        openai_api_key=user.openai_api_key,
+        elabs_api_key=user.elabs_api_key,
     ), 200
 
 @app.route('/update', methods=['POST'])
@@ -107,6 +118,8 @@ def update():
     hostName = request.form['hostName']
     explanationLevel = request.form['explanationLevel']
     voice_id = request.form['voice_id']
+    openai_api_key = request.form['openai_api_key']
+    elabs_api_key = request.form['elabs_api_key']
 
     # check if user exists
     user = User.query.filter_by(id=id).first()
@@ -118,6 +131,8 @@ def update():
     user.hostName = hostName
     user.explanationLevel = explanationLevel
     user.voice_id = voice_id
+    user.openai_api_key = openai_api_key
+    user.elabs_api_key = elabs_api_key
     db.session.commit()
 
     # return success
@@ -128,11 +143,16 @@ def update():
         hostName=user.hostName,
         explanationLevel=user.explanationLevel,
         voice_id=user.voice_id,
+        openai_api_key=user.openai_api_key,
+        elabs_api_key=user.elabs_api_key,
     ), 200
 
 @app.route('/voices')
 def voices():
-    return jsonify(get_voices())
+    # get api key from header
+    elabs_api_key = request.headers.get('elabs_api_key')
+    elabs = Elabs(elabs_api_key)
+    return jsonify(elabs.get_voices())
 
 @app.route('/podcasts/<id>')
 def podcasts(id):
@@ -145,20 +165,28 @@ def podcasts(id):
     # get files in static/media folder
     files = os.listdir('static/media/' + str(user.id))
     # return list of files
-    return jsonify(["http://localhost:3000/static/media/"+ str(user.id) + "/" + file for file in files])
+    return jsonify(["/static/media/"+ str(user.id) + "/" + file for file in files])
 
 @app.route('/tts', methods=['POST'])
 def text_to_speech():
+    elabs_api_key = request.headers.get('elabs_api_key')
+    elabs = Elabs(elabs_api_key)
     # parse json body
     body = request.get_json()
     print(body)
     text = body['text']
-    res = tts(text)
+    res = elabs.tts(text)
     print(res)
     return jsonify(res)
 
 @app.route('/upload', methods=['POST'])
 def upload_file():
+    elabs_api_key = request.headers.get('elabs_api_key')
+    elabs = Elabs(elabs_api_key)
+
+    openai_api_key = request.headers.get('openai-api-key')
+    podcast_generator = PodcastGenerator(openai_api_key)
+
     print(request.form)
     # parse the form data
     podcastName = request.form['podcastName']
@@ -184,12 +212,31 @@ def upload_file():
     if file and '.' in file.filename and file.filename.rsplit('.', 1)[1].lower() == 'pdf':
         # response = summarizeDocument(file)
         # corpus = generateScript(file)
-        podcastScript = generatePodcast(podcastName, hostName, explanationLevel, file)
+        podcastScript = podcast_generator.generatePodcast(podcastName, hostName, explanationLevel, file)
+        with open('script.json', 'w') as f:
+            f.write(json.dumps(podcastScript))
         
-        podcast = tts(id, podcastScript, voice_id)
+        podcast = elabs.tts_chuncked(user_id=id, text=podcastScript, voice_id=voice_id)
 
         return jsonify(result=podcast), 200
         # return jsonify(error='Not implemented'), 200
+
+@app.route('/audio')
+def audio():
+    elabs_api_key = request.headers.get('elabs_api_key')
+    elabs = Elabs(elabs_api_key)
+
+    # Opening JSON file
+    f = open('script.json')
+    
+    # returns JSON object as
+    # a dictionary
+    podcastScript = json.load(f)
+
+    print(podcastScript)
+    podcast = elabs.tts_chuncked(user_id=1, text=podcastScript)
+
+    return jsonify(result=podcast), 200
 
 if __name__ == '__main__':
     app.run(debug=True, port=3000)
