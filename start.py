@@ -49,6 +49,7 @@ with app.app_context():
 
 # make dir if not exists
 if not os.path.exists('static/media'):
+    os.mkdir('static')
     os.mkdir('static/media')
 
 if not os.path.exists('docs'):
