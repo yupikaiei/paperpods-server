@@ -23,6 +23,22 @@ class User(db.Model):
     explanationLevel = db.Column(db.String, nullable=True)
     voice_id = db.Column(db.String, nullable=True)
 
+class Podcast(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    User_id = db.Column(db.Integer, db.ForeignKey('user.id'), primary_key=True)
+    image = db.Column(db.String, nullable=True)
+    name = db.Column(db.String, nullable=False)
+    host = db.Column(db.String, nullable=False)
+    explanationLevel = db.Column(db.String, nullable=False)
+    voice_id = db.Column(db.String, nullable=False)
+    file = db.Column(db.String, nullable=False)
+    paperUrl = db.Column(db.String, nullable=False)
+    paperTitle = db.Column(db.String, nullable=False)
+    liked = db.Column(db.Boolean, nullable=False, default=True)
+    played = db.Column(db.Boolean, nullable=False, default=False)
+    created_at = db.Column(db.DateTime, nullable=False, default=db.func.now())
+
+
 app = Flask(__name__)
 
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///data.db"
@@ -30,6 +46,13 @@ db.init_app(app)
 
 with app.app_context():
     db.create_all()
+
+# make dir if not exists
+if not os.path.exists('static/media'):
+    os.mkdir('static/media')
+
+if not os.path.exists('docs'):
+    os.mkdir('docs')
 
 # cors
 CORS(app, resources={r"/*": {"origins": "*"}})
@@ -217,6 +240,18 @@ def upload_file():
             f.write(json.dumps(podcastScript))
         
         podcast = elabs.tts_chuncked(user_id=id, text=podcastScript, voice_id=voice_id)
+
+        db.session.add(Podcast(
+            User_id=id,
+            name=podcastName,
+            paperTitle=file.filename,
+            host=hostName,
+            explanationLevel=explanationLevel,
+            voice_id=voice_id,
+            file=podcast['url'],
+            paperUrl='docs/' + file.filename,
+        ))
+        db.session.commit()
 
         return jsonify(result=podcast), 200
         # return jsonify(error='Not implemented'), 200
