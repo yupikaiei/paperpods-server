@@ -4,7 +4,7 @@ langchain
 python-dotenv
 tiktoken
 pypdf
-chromadb
+chromadb=0.3.29
 flask_cors
 Flask-SQLAlchemy
 unstructured
