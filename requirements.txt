@@ -8,3 +8,4 @@ chromadb
 flask_cors
 Flask-SQLAlchemy
 unstructured
+gunicorn
