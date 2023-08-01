@@ -84,7 +84,7 @@ class PodcastGenerator:
         # """
         prt_tpl = """
             {podcastName} is podcast hosted by {hostName} that explains research papers in a fun and engaging way. Today's paper topic is {topic}.
-            Write a short podcast introduction. Be specific about the name of the paper and the authors, but write like you are talking to a {explanationLevel}.
+            Write a short podcast introduction. Be specific about the name of the paper and the team, but write like you are talking to a {explanationLevel}.
         """
         prt = PromptTemplate(template=prt_tpl,
                         input_variables=["podcastName", "hostName", "explanationLevel", "topic"])
