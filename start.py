@@ -56,7 +56,7 @@ if not os.path.exists('docs'):
     os.mkdir('docs')
 
 # cors
-CORS(app, resources={r"/*": {"origins": "*"}})
+CORS(app)
 
 # a simple page that says hello
 @app.route('/')
@@ -242,7 +242,7 @@ def upload_file():
         
         podcast = elabs.tts_chuncked(user_id=id, text=podcastScript, voice_id=voice_id)
 
-        db.session.add(Podcast(
+        podcast_full = Podcast(
             User_id=id,
             name=podcastName,
             paperTitle=file.filename,
@@ -251,10 +251,25 @@ def upload_file():
             voice_id=voice_id,
             file=podcast['url'],
             paperUrl='docs/' + file.filename,
-        ))
+        )
+        db.session.add(podcast_full)
         db.session.commit()
 
-        return jsonify(result=podcast), 200
+        pod = {
+            "id": podcast_full.id,
+            "name": podcast_full.name,
+            "paperTitle": podcast_full.paperTitle,
+            "host": podcast_full.host,
+            "explanationLevel": podcast_full.explanationLevel,
+            "voice_id": podcast_full.voice_id,
+            "file": podcast_full.file,
+            "paperUrl": podcast_full.paperUrl,
+            "liked": podcast_full.liked,
+            "played": podcast_full.played,
+            "created_at": podcast_full.created_at,
+        }
+
+        return jsonify(pod), 200
         # return jsonify(error='Not implemented'), 200
 
 @app.route('/audio')
