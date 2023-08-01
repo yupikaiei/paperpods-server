@@ -49,21 +49,21 @@ class Elabs():
                     f.write(chunk)
 
         return {
-            "url": "/static/media/" + str(user_id) + "/" + filename
+            "url": "static/media/" + str(user_id) + "/" + filename
         }
 
     def tts_chuncked(self, user_id, text, voice_id="21m00Tcm4TlvDq8ikWAM", model="eleven_monolingual_v1", similarity_boost=0.5, stability=0.5):
         parts = []
 
         result = self.tts(user_id, text["intro"], voice_id, model, similarity_boost, stability)
-        parts.append("." + result["url"])
+        parts.append("./" + result["url"])
 
         for chapter in text["content"]:
             result = self.tts(user_id, chapter, voice_id, model, similarity_boost, stability)
-            parts.append("." + result["url"])
+            parts.append("./" + result["url"])
 
         result = self.tts(user_id, text["closure"], voice_id, model, similarity_boost, stability)
-        parts.append("."+result["url"])
+        parts.append("./"+result["url"])
 
         # get files in directory
         # files = os.listdir('static/media/' + str(user_id))
@@ -89,5 +89,5 @@ class Elabs():
                 os.remove(audio_file)
 
         return {
-            "url": "/static/media/" + str(user_id) + "/" + filename
+            "url": "static/media/" + str(user_id) + "/" + filename
         }
